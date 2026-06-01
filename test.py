@@ -67,3 +67,13 @@ def create_post():
 
 if __name__ == "__main__":
     app.run(debug=True)
+    
+
+
+# develop:  A --- B --- C
+# form:     X --- Y --- Z
+
+# Rebase ke baad:
+# develop:  A --- B --- C
+# form:                 C --- X --- Y --- Z
+
