@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
 import re
 
+
 app = Flask(__name__)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = 'postgresql://lavanya:123@localhost:5432/post'
