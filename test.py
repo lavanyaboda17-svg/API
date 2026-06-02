@@ -64,16 +64,34 @@ def create_post():
         db.session.rollback()
         return "Something went wrong!", 500
 
+#fetch posts
+@app.route("/users/<int:user_id>/posts")
+def get_user_posts(user_id):
 
+    user = db.session.execute(
+        text("SELECT * FROM users WHERE user_id = :user_id"),
+        {"user_id": user_id}
+    )
+
+    users = user.fetchall()
+
+    if not users:
+        return "User not found", 404
+
+    result = db.session.execute(
+        text("SELECT * FROM posts WHERE user_id = :user_id"),
+        {"user_id": user_id}
+    )
+
+    posts = result.fetchall()
+
+    return render_template("single_post.html", posts=posts)
+   
+    
 if __name__ == "__main__":
     app.run(debug=True)
-    
 
 
-# develop:  A --- B --- C
-# form:     X --- Y --- Z
-
-# Rebase ke baad:
-# develop:  A --- B --- C
-# form:                 C --- X --- Y --- Z
-
+#create_post:http://127.0.0.1:5000/post
+#fetch user post:http://127.0.0.1:5000/users/1/posts
+#git rebase develop
