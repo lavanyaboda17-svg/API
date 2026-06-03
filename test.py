@@ -31,18 +31,15 @@ def create_user():
 
     if not re.match("^[a-zA-Z]+$", username):
         return render_template("index.html", error="Invalid username")
-
     try:
-        db.session.execute(
-            text("INSERT INTO users (user_name) VALUES (:username)"),
-            {"username": username}
-        )
-        db.session.commit()
+        with db.session.begin():
+            db.session.execute(
+                text("INSERT INTO users (user_name) VALUES (:username)"),
+                {"username": username}
+                )
         return render_template("user_success.html", username=username)
     except:
-        db.session.rollback()
-        return "Something went wrong!", 500
-
+        return "Something went wrong", 500
 
 # POST API 2: Create Post
 @app.route("/create-post", methods=["POST"])
@@ -52,40 +49,38 @@ def create_post():
 
     if not title or not body:
         return "All fields are required", 400
-
+    
     try:
-        db.session.execute(
-            text("INSERT INTO posts (user_id, title, body) VALUES (:user_id, :title, :body)"),
-            {"user_id": DEFAULT_USER_ID, "title": title, "body": body}
-        )
-        db.session.commit()
+        with db.session.begin():
+            db.session.execute(
+                text("INSERT INTO posts (user_id, title, body) VALUES (:user_id, :title, :body)"),
+                {"user_id": DEFAULT_USER_ID, "title": title, "body": body}
+                )
         return render_template("post_success.html", title=title)
     except:
-        db.session.rollback()
-        return "Something went wrong!", 500
+        return "Something went wrong", 500
 
 #fetch posts
 @app.route("/users/<int:user_id>/posts")
 def get_user_posts(user_id):
-    with db.session.begin(): #DB operation manage
-        user = db.session.execute(
-        text("SELECT * FROM users WHERE user_id = :user_id"),
-        {"user_id": user_id}
-    )
-
-    users = user.fetchall()
-
-    if not users:
-        return "User not found", 404
-
-    result = db.session.execute(
-        text("SELECT * FROM posts WHERE user_id = :user_id"),
-        {"user_id": user_id}
-    )
-
-    posts = result.fetchall()
-
-    return render_template("single_post.html", posts=posts)
+    try: 
+        with db.session.begin(): #DB operation manage
+            user = db.session.execute(
+                text("SELECT * FROM users WHERE user_id = :user_id"),
+                {"user_id": user_id}
+                )
+            users = user.fetchall()
+            if not users:
+                return "User not found", 404
+        
+            result = db.session.execute(
+                text("SELECT * FROM posts WHERE user_id = :user_id"),
+                {"user_id": user_id}
+                )
+            posts = result.fetchall()
+            return render_template("single_post.html", posts=posts)
+    except:
+        return "Something went wrong", 500
    
     
 if __name__ == "__main__":
