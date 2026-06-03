@@ -67,8 +67,8 @@ def create_post():
 #fetch posts
 @app.route("/users/<int:user_id>/posts")
 def get_user_posts(user_id):
-
-    user = db.session.execute(
+    with db.session.begin(): #DB operation manage
+        user = db.session.execute(
         text("SELECT * FROM users WHERE user_id = :user_id"),
         {"user_id": user_id}
     )
