@@ -5,12 +5,24 @@
 </head>
 <body>
     <h2>User Posts</h2>
+    {% if posts %}
+        <p>User ID: {{ posts[0].user_id }}</p>
+        <a href="/post"><button>+ Create Post</button></a>
 
-    {% for post in posts %}
-         <p>User ID:{{ post.user_id }}</p>
-        <h3>{{ post.title }}</h3>
-        <p>{{ post.body }}</p>
-        <hr>
-    {% endfor %}
+        {% for post in posts %}
+            {% if loop.index <= 2 or show_all %}
+                <h3>{{ loop.index }}. {{ post.title }}</h3>
+                <p>{{ post.body }}</p>
+                <hr>
+            {% endif %}
+        {% endfor %}
+
+        {% if not show_all %}
+            <a href="/user/{{ posts[0].user_id }}/posts?show_all=true"><button>Show All Posts</button></a>
+        {% endif %}
+
+    {% else %}
+        <p>No posts yet. <a href="/post">Create your first post!</a></p>
+    {% endif %}
 </body>
 </html>

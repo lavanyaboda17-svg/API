@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Register</title>
+</head>
+<body>
+  <h2>Register</h2>
+  <form action="/register" method="POST">
+    <label>Username:</label><br>
+    <input type="text" name="username" placeholder="Enter your username" value="{{ request.form.get('username', '') }}"/><br><br>
+    <label>Password:</label><br>
+    <input type="password" name="password" placeholder="Enter your password" value="{{ request.form.get('password', '') }}"/><br><br>
+    <button type="submit">Register</button>
+  </form>
+  {% if error %}
+    <p style="color: red;">{{ error }}</p>
+{% endif %}
+</html>
