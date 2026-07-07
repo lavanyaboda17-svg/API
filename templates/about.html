@@ -1,120 +1,157 @@
 <!doctype html>
-<!-- Tells browser this is an HTML file -->
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <!-- Makes page fit on mobile screens -->
-  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-  <!-- Bootstrap CSS from internet (design library) -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous" />
-      <!-- CDN (Content Delivery Network) -->
-  <title>BlogApp - About Us</title>
-</head>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css"
+      integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
+      crossorigin="anonymous"
+    />
+    <title>BlogApp - About Us</title>
+  </head>
 
-<body class="d-flex flex-column min-vh-100">
+  <body class="d-flex flex-column min-vh-100">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+      <a class="navbar-brand font-weight-bold" href="{{ url_for('index') }}"
+        >BlogApp</a
+      >
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-toggle="collapse"
+        data-target="#navbarNav"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('index') }}">HOME</a>
+          </li>
+          <li class="nav-item active">
+            <a class="nav-link" href="{{ url_for('about') }}">ABOUT US</a>
+          </li>
+          {% if session.get('user_id') %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('post_page') }}"
+              >CREATE POST</a
+            >
+          </li>
+          <li class="nav-item">
+            <a
+              class="nav-link"
+              href="{{ url_for('get_user_posts', user_id=session['user_id']) }}"
+              >VIEW POSTS</a
+            >
+          </li>
+          {% endif %}
+        </ul>
 
-  <!-- Top navigation bar (same as index.html) -->
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <a class="navbar-brand font-weight-bold" href="{{ url_for('index') }}">BlogApp</a>
-    <!-- Hamburger button - only on mobile -->
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav mr-auto">
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('index') }}">HOME</a>
-        </li>
-        <!-- active = current page highlighted -->
-        <li class="nav-item active">
-          <a class="nav-link" href="{{ url_for('about') }}">ABOUT US</a>
-        </li>
-        <!-- Show only if user is logged in -->
         {% if session.get('user_id') %}
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('post_page') }}">CREATE POST</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('get_user_posts', user_id=session['user_id']) }}">VIEW POSTS</a>
-        </li>
+        <span class="navbar-text text-white mr-3">
+          <i
+            ><b
+              ><marquee>
+                Welcome, {{ username }}❤️🤗
+              </marquee></b
+            ></i
+          >
+        </span>
+        <a href="{{ url_for('logout') }}" class="btn btn-outline-light btn-sm"
+          >Logout</a
+        >
+        {% else %}
+        <ul class="navbar-nav">
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('login') }}">LOGIN</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('register') }}">REGISTER</a>
+          </li>
+        </ul>
         {% endif %}
-      </ul>
+      </div>
+    </nav>
 
-      <!-- Logged in: show welcome + logout | Not logged in: show login/register -->
-      {% if session.get('user_id') %}
-      <span class="navbar-text text-white mr-3">
-        <i><b><marquee>Welcome, {{ username }}❤️🤗</marquee></b></i>
-      </span>
-      <a href="{{ url_for('logout') }}" class="btn btn-outline-light btn-sm">Logout</a>
-      {% else %}
-      <ul class="navbar-nav">
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('login') }}">LOGIN</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('register') }}">REGISTER</a>
-        </li>
-      </ul>
-      {% endif %}
-    </div>
-  </nav>
+    <!-- Features Section -->
+    <div class="container-fluid py-5 flex-grow-1" style="background: #eef2f7">
+      <div class="text-center mb-5">
+        <h2 class="font-weight-bold">Why BlogApp?</h2>
+        <p class="text-muted">
+          Everything you need to read and write great content
+        </p>
+      </div>
 
-  <!-- Main content area with light blue-grey background -->
-  <div class="container-fluid py-5 flex-grow-1" style="background: #eef2f7">
+      <div class="row px-5">
+        <div class="col-md-4 mb-4">
+          <div class="card h-100 text-center shadow-sm border-0">
+            <div class="card-body">
+              <h1 class="display-4">📝</h1>
+              <h5 class="card-title font-weight-bold">Register & Login</h5>
+              <p class="card-text text-muted">
+                Create your own account in seconds and log in anytime to
+                continue writing.
+              </p>
+            </div>
+          </div>
+        </div>
 
-    <!-- Center heading -->
-    <div class="text-center mb-5">
-      <h2 class="font-weight-bold">Why BlogApp?</h2>
-      <p class="text-muted">Everything you need to read and write great content</p>
-    </div>
+        <div class="col-md-4 mb-4">
+          <div class="card h-100 text-center shadow-sm border-0">
+            <div class="card-body">
+              <h1 class="display-4">✍️</h1>
+              <h5 class="card-title font-weight-bold">Write Your Posts</h5>
+              <p class="card-text text-muted">
+                Create and save your own posts — your personal space to write
+                whatever's on your mind.
+              </p>
+            </div>
+          </div>
+        </div>
 
-    <!-- Row = 3 cards side by side -->
-    <div class="row px-5">
-
-      <!-- Card 1 - takes 4 out of 12 columns = 1/3 of screen -->
-      <div class="col-md-4 mb-4">
-        <div class="card h-100 text-center shadow-sm border-0">
-          <div class="card-body">
-            <h1 class="display-4">📝</h1>
-            <h5 class="card-title font-weight-bold">Register & Login</h5>
-            <p class="card-text text-muted">Create your own account in seconds and log in anytime to continue writing.</p>
+        <div class="col-md-4 mb-4">
+          <div class="card h-100 text-center shadow-sm border-0">
+            <div class="card-body">
+              <h1 class="display-4">🔒</h1>
+              <h5 class="card-title font-weight-bold">Private & Secure</h5>
+              <p class="card-text text-muted">
+                Only you can see your posts. Your account is protected with
+                hashed passwords and secure sessions.
+              </p>
+            </div>
           </div>
         </div>
       </div>
-
-      <!-- Card 2 -->
-      <div class="col-md-4 mb-4">
-        <div class="card h-100 text-center shadow-sm border-0">
-          <div class="card-body">
-            <h1 class="display-4">✍️</h1>
-            <h5 class="card-title font-weight-bold">Write Your Posts</h5>
-            <p class="card-text text-muted">Create and save your own posts — your personal space to write whatever's on your mind.</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Card 3 -->
-      <div class="col-md-4 mb-4">
-        <div class="card h-100 text-center shadow-sm border-0">
-          <div class="card-body">
-            <h1 class="display-4">🔒</h1>
-            <h5 class="card-title font-weight-bold">Private & Secure</h5>
-            <p class="card-text text-muted">Only you can see your posts. Your account is protected with hashed passwords and secure sessions.</p>
-          </div>
-        </div>
-      </div>
-
     </div>
-  </div>
 
-  <!-- Footer at bottom -->
-  <footer class="bg-secondary text-white text-center" style="height: 50px; line-height: 50px">
-    <small>&copy; 2025 BlogApp. Made with Flask & Bootstrap.</small>
-  </footer>
+    <!-- Footer -->
+    <footer
+      class="bg-secondary text-white text-center"
+      style="height: 50px; line-height: 50px"
+    >
+      <small>&copy; 2025 BlogApp. Made with Flask & Bootstrap.</small>
+    </footer>
 
-  <!-- Bootstrap JS files (needed for navbar toggle) -->
-  <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
-</body>
+    <script
+      src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
+      integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+      integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/js/bootstrap.min.js"
+      integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+      crossorigin="anonymous"
+    ></script>
+  </body>
 </html>
