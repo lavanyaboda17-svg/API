@@ -27,11 +27,11 @@ A simple Flask-based blogging application with user registration, login, and pos
 
 ## Project Structure
 
-```text
 bootsrap2/
 ├── app.py                  # Main Flask application
 ├── requirements.txt        # Python dependencies
 ├── Dockerfile              # Docker image definition
+├── init.sql                # Auto-creates users/posts tables on first Postgres run
 ├── .gitignore
 ├── static/
 │   └── abc.mp4             # Background video for homepage
@@ -45,7 +45,6 @@ bootsrap2/
     ├── profile.html
     ├── post_success.html
     └── single_post.html
-```
 
 ## Setup Instructions
 
@@ -83,28 +82,14 @@ pip install -r requirements.txt
 
 ### 4. Set up PostgreSQL
 
-Create a database and user matching the connection string in `app.py`:
+If running Postgres via Docker (see below), tables are created automatically from `init.sql` — no manual step needed.
 
-```sql
-CREATE USER lavanya WITH PASSWORD '123';
-CREATE DATABASE post OWNER lavanya;
-```
+If running Postgres locally (without Docker), create the database/user and run `init.sql` manually:
 
-Create the required tables:
-
-```sql
-CREATE TABLE users (
-    user_id SERIAL PRIMARY KEY,
-    user_name VARCHAR(50) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL
-);
-
-CREATE TABLE posts (
-    post_id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(user_id),
-    title VARCHAR(255) NOT NULL,
-    body TEXT NOT NULL
-);
+```bash
+psql -U postgres -c "CREATE USER lavanya WITH PASSWORD '123';"
+psql -U postgres -c "CREATE DATABASE post OWNER lavanya;"
+psql -U lavanya -d post -f init.sql
 ```
 
 ### 5. Run the application
@@ -121,16 +106,45 @@ http://127.0.0.1:5000
 
 ## Running with Docker
 
-Build the image:
+This project uses two containers: one for PostgreSQL (database) and one for the Flask app.
+
+### 1. Start the PostgreSQL container
+
+The `init.sql` file (in the project root) automatically creates the `users` and `posts` tables the first time the Postgres container starts.
+
+**PowerShell:**
+```powershell
+docker run -d --name my-postgres -e POSTGRES_USER=lavanya -e POSTGRES_PASSWORD=123 -e POSTGRES_DB=post -p 5432:5432 -v "${PWD}\init.sql:/docker-entrypoint-initdb.d/init.sql" postgres
+```
+
+**CMD:**
+```cmd
+docker run -d --name my-postgres -e POSTGRES_USER=lavanya -e POSTGRES_PASSWORD=123 -e POSTGRES_DB=post -p 5432:5432 -v "%cd%\init.sql:/docker-entrypoint-initdb.d/init.sql" postgres
+```
+
+Verify the tables were created:
+```bash
+docker exec -it my-postgres psql -U lavanya -d post
+\dt
+```
+
+### 2. Build the Flask app image
 
 ```bash
 docker build -t website-app .
 ```
 
-Run the container:
+### 3. Run the Flask app container, connected to Postgres
 
 ```bash
-docker run -p 5000:5000 website-app
+docker run -d --name my-website -p 5000:5000 -e DB_HOST=my-postgres --link my-postgres website-app
+```
+
+`DB_HOST=my-postgres` tells the app to connect to the Postgres container by its container name instead of `localhost` (see `app.py`, which reads `DB_HOST` from the environment).
+
+The app will be available at:
+```text
+http://localhost:5000
 ```
 
 ## Routes

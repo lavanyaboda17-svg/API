@@ -7,12 +7,14 @@ from datetime import timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 #plain text → hashed and login time check 
 from functools import wraps
+import os
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 app.permanent_session_lifetime = timedelta(minutes=5)
  
-app.config["SQLALCHEMY_DATABASE_URI"] = 'postgresql://lavanya:123@localhost:5432/post'
+db_host = os.environ.get('DB_HOST', 'localhost')
+app.config["SQLALCHEMY_DATABASE_URI"] = f'postgresql://lavanya:123@{db_host}:5432/post'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -215,8 +217,8 @@ def get_user_posts(user_id):
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
-
+    app.run(host="0.0.0.0", port=5000, debug=True)
+    
 # create_post:http://127.0.0.1:5000/post
 # fetch user post:http://127.0.0.1:5000/users/1/posts
 # git rebase develop
