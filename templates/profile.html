@@ -12,7 +12,7 @@
       integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
       crossorigin="anonymous"
     />
-    <title>No Post Yet - BlogApp</title>
+    <title>Profile - BlogApp</title>
   </head>
   <body class="d-flex flex-column min-vh-100">
     <!-- Navbar -->
@@ -28,30 +28,31 @@
       </button>
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav mr-auto">
-          <li class="nav-item active">
-            <a class="nav-link" href="{{ url_for('index') }}">HOME</a>
+          <li class="nav-item">
+            <a class="nav-link" href="index.html">HOME</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('about') }}">ABOUT US</a>
+            <a class="nav-link" href="about.html">ABOUT US</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('login') }}">LOGIN</a>
+            <a class="nav-link" href="login.html">LOGIN</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('register') }}">REGISTER</a>
+            <a class="nav-link" href="register.html">REGISTER</a>
           </li>
         </ul>
       </div>
     </nav>
 
-    <!-- No Post Section -->
+    <!-- Profile Section -->
     <div
       class="container flex-grow-1 d-flex align-items-center justify-content-center"
     >
       <div class="text-center">
-        <h1 class="display-4 mb-3">📭</h1>
-        <h2 class="font-weight-bold">No Post Yet</h2>
-        <a href="/" class="btn btn-dark mt-3">Go Back Home</a>
+        <h1>User ID: {{ user_id }}</h1>
+        <a href="/user/{{ user_id }}/posts" class="btn btn-dark mt-3"
+          >View Posts</a
+        >
       </div>
     </div>
 

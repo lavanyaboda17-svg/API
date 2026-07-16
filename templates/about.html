@@ -2,7 +2,6 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <!-- Makes page fit on mobile screens -->
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1, shrink-to-fit=no"
@@ -13,18 +12,15 @@
       integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
       crossorigin="anonymous"
     />
-    <!-- CDN (Content Delivery Network) -->
-    <title>BlogApp - For Everyone</title>
+    <title>BlogApp - About Us</title>
   </head>
+
   <body class="d-flex flex-column min-vh-100">
     <!-- Navbar -->
-    <!-- Top navigation bar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-      <!-- Site logo/name - clicks go to home -->
       <a class="navbar-brand font-weight-bold" href="{{ url_for('index') }}"
         >BlogApp</a
       >
-      <!-- Hamburger button - only visible on mobile -->
       <button
         class="navbar-toggler"
         type="button"
@@ -33,17 +29,14 @@
       >
         <span class="navbar-toggler-icon"></span>
       </button>
-
-      <!-- All nav links inside this collapsible box -->
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav mr-auto">
-          <li class="nav-item active">
+          <li class="nav-item">
             <a class="nav-link" href="{{ url_for('index') }}">HOME</a>
           </li>
-          <li class="nav-item">
+          <li class="nav-item active">
             <a class="nav-link" href="{{ url_for('about') }}">ABOUT US</a>
           </li>
-          <!-- Show these links only if user is logged in -->
           {% if session.get('user_id') %}
           <li class="nav-item">
             <a class="nav-link" href="{{ url_for('post_page') }}"
@@ -60,11 +53,14 @@
           {% endif %}
         </ul>
 
-        <!-- If logged in: show username + logout, else show login/register -->
         {% if session.get('user_id') %}
         <span class="navbar-text text-white mr-3">
           <i
-            ><b><marquee>Welcome, {{ username }}❤️🤗</marquee></b></i
+            ><b
+              ><marquee>
+                Welcome, {{ username }}❤️🤗
+              </marquee></b
+            ></i
           >
         </span>
         <a href="{{ url_for('logout') }}" class="btn btn-outline-light btn-sm"
@@ -83,53 +79,65 @@
       </div>
     </nav>
 
-    <!-- Background video section -->
-    <div class="position-relative overflow-hidden flex-grow-1">
-      <!-- Autoplay video, muted (required for autoplay), loops forever -->
-      <video
-        autoplay
-        muted
-        loop
-        style="
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        "
-      >
-        <!-- Video file from static folder -->
-        <source
-          src="{{ url_for('static', filename='abc.mp4') }}"
-          type="video/mp4"
-        />
-      </video>
-      <!-- Dark overlay on video + centered text -->
-      <div
-        class="position-absolute w-100 h-100 d-flex align-items-center justify-content-center flex-column"
-        style="top: 0; background: rgba(0, 0, 0, 0.55)"
-      >
-        <h1 class="text-white font-weight-bold">Welcome To BlogApp</h1>
-        <p class="text-white-50">
-          Read, write, and share your thoughts with the world.
+    <!-- Features Section -->
+    <div class="container-fluid py-5 flex-grow-1" style="background: #eef2f7">
+      <div class="text-center mb-5">
+        <h2 class="font-weight-bold">Why BlogApp?</h2>
+        <p class="text-muted">
+          Everything you need to read and write great content
         </p>
-        <a href="{{ url_for('register') }}" class="btn btn-dark btn-lg mt-3"
-          >Get Started</a
-        >
+      </div>
+
+      <div class="row px-5">
+        <div class="col-md-4 mb-4">
+          <div class="card h-100 text-center shadow-sm border-0">
+            <div class="card-body">
+              <h1 class="display-4">📝</h1>
+              <h5 class="card-title font-weight-bold">Register & Login</h5>
+              <p class="card-text text-muted">
+                Create your own account in seconds and log in anytime to
+                continue writing.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+          <div class="card h-100 text-center shadow-sm border-0">
+            <div class="card-body">
+              <h1 class="display-4">✍️</h1>
+              <h5 class="card-title font-weight-bold">Write Your Posts</h5>
+              <p class="card-text text-muted">
+                Create and save your own posts — your personal space to write
+                whatever's on your mind.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+          <div class="card h-100 text-center shadow-sm border-0">
+            <div class="card-body">
+              <h1 class="display-4">🔒</h1>
+              <h5 class="card-title font-weight-bold">Private & Secure</h5>
+              <p class="card-text text-muted">
+                Only you can see your posts. Your account is protected with
+                hashed passwords and secure sessions.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Footer at bottom of page -->
+    <!-- Footer -->
     <footer
       class="bg-secondary text-white text-center"
       style="height: 50px; line-height: 50px"
     >
-      <!-- &copy; = © copyright symbol -->
-      <small>&copy; 2025 BlogApp. Made with Flask &amp; Bootstrap.</small>
+      <small>&copy; 2025 BlogApp. Made with Flask & Bootstrap.</small>
     </footer>
 
-    <!-- Bootstrap JS files (needed for navbar toggle to work) -->
     <script
       src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
       integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n"
