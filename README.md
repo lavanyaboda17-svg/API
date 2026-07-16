@@ -10,6 +10,8 @@ A simple Flask-based blogging application with user registration, login, and pos
 - Create and view blog posts
 - User profile pages
 - Logout functionality
+- PostgreSQL Database
+- Docker & Docker Compose Support
 
 ## Tech Stack
 
@@ -18,23 +20,31 @@ A simple Flask-based blogging application with user registration, login, and pos
 - **ORM:** Flask-SQLAlchemy
 - **Templating:** Jinja2
 - **Frontend:** HTML, Bootstrap 4
+- **Containerization:** Docker, Docker Compose
 
 ## Prerequisites
 
 - Python 3.10+
-- PostgreSQL server
+- PostgreSQL server (only needed for non-Docker local runs)
 - pip
+- Docker & Docker Compose (for containerized runs)
 
 ## Project Structure
 
-bootsrap2/
-├── app.py                  # Main Flask application
-├── requirements.txt        # Python dependencies
-├── Dockerfile              # Docker image definition
-├── init.sql                # Auto-creates users/posts tables on first Postgres run
+```
+BlogApp/
+│
+├── app.py
+├── Dockerfile
+├── docker-compose.yml
+├── requirements.txt
+├── README.md
+├── .env                     # Real credentials (not committed)
+├── .env.example             # Template for .env
+├── .dockerignore
 ├── .gitignore
 ├── static/
-│   └── abc.mp4             # Background video for homepage
+│   └── abc.mp4              # Background video for homepage
 └── templates/
     ├── index.html
     ├── about.html
@@ -45,6 +55,7 @@ bootsrap2/
     ├── profile.html
     ├── post_success.html
     └── single_post.html
+```
 
 ## Setup Instructions
 
@@ -55,23 +66,24 @@ git clone https://github.com/lavanyaboda17-svg/API.git
 cd API
 ```
 
-### 2. Create and activate a virtual environment
+### 2. Configure environment variables
+
+Copy the example file and fill in your own values:
 
 ```bash
-python -m venv venv
+cp .env.example .env
 ```
 
-**Windows (PowerShell):**
+`.env` must contain:
 
-```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
-.\venv\Scripts\activate
 ```
+DB_USER=your_db_user
+DB_PASSWORD=your_db_password
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=your_db_name
 
-**macOS/Linux:**
-
-```bash
-source venv/bin/activate
+SECRET_KEY=your_secret_key
 ```
 
 ### 3. Install dependencies
@@ -80,72 +92,65 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 4. Set up PostgreSQL
-
-If running Postgres via Docker (see below), tables are created automatically from `init.sql` — no manual step needed.
-
-If running Postgres locally (without Docker), create the database/user and run `init.sql` manually:
-
-```bash
-psql -U postgres -c "CREATE USER lavanya WITH PASSWORD '123';"
-psql -U postgres -c "CREATE DATABASE post OWNER lavanya;"
-psql -U lavanya -d post -f init.sql
-```
-
-### 5. Run the application
+### 4. Run the application
 
 ```bash
 python app.py
 ```
 
-The app will be available at:
+The application will be available at:
 
-```text
+```
 http://127.0.0.1:5000
 ```
 
-## Running with Docker
+---
 
-This project uses two containers: one for PostgreSQL (database) and one for the Flask app.
+## Run with Docker Compose
 
-### 1. Start the PostgreSQL container
-
-The `init.sql` file (in the project root) automatically creates the `users` and `posts` tables the first time the Postgres container starts.
-
-**PowerShell:**
-```powershell
-docker run -d --name my-postgres -e POSTGRES_USER=lavanya -e POSTGRES_PASSWORD=123 -e POSTGRES_DB=post -p 5432:5432 -v "${PWD}\init.sql:/docker-entrypoint-initdb.d/init.sql" postgres
-```
-
-**CMD:**
-```cmd
-docker run -d --name my-postgres -e POSTGRES_USER=lavanya -e POSTGRES_PASSWORD=123 -e POSTGRES_DB=post -p 5432:5432 -v "%cd%\init.sql:/docker-entrypoint-initdb.d/init.sql" postgres
-```
-
-Verify the tables were created:
-```bash
-docker exec -it my-postgres psql -U lavanya -d post
-\dt
-```
-
-### 2. Build the Flask app image
+### Build the Docker images
 
 ```bash
-docker build -t website-app .
+docker compose build
 ```
 
-### 3. Run the Flask app container, connected to Postgres
+### Start the containers
 
 ```bash
-docker run -d --name my-website -p 5000:5000 -e DB_HOST=my-postgres --link my-postgres website-app
+docker compose up
 ```
 
-`DB_HOST=my-postgres` tells the app to connect to the Postgres container by its container name instead of `localhost` (see `app.py`, which reads `DB_HOST` from the environment).
+Run in detached mode:
 
-The app will be available at:
-```text
+```bash
+docker compose up -d
+```
+
+### Stop the containers
+
+```bash
+docker compose stop
+```
+
+### Stop and remove the containers (data is preserved)
+
+```bash
+docker compose down
+```
+
+### Stop, remove containers, AND delete the database data
+
+```bash
+docker compose down -v
+```
+
+The application will be available at:
+
+```
 http://localhost:5000
 ```
+
+The PostgreSQL database is exposed on the host at `localhost:5433` (mapped from the container's internal port `5432`), so external tools like pgAdmin should connect using port `5433`.
 
 ## Routes
 

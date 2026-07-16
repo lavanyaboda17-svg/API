@@ -1,4 +1,5 @@
 from flask import Flask, request, render_template, session , redirect, url_for
+from flask.cli import load_dotenv
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
 import re
@@ -10,15 +11,52 @@ from functools import wraps
 import os
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'
+load_dotenv()
+app.secret_key = os.getenv("SECRET_KEY")
+if not app.secret_key:
+    raise RuntimeError("FLASK_SECRET_KEY must be set in your .env file")
 app.permanent_session_lifetime = timedelta(minutes=5)
- 
-db_host = os.environ.get('DB_HOST', 'localhost')
-app.config["SQLALCHEMY_DATABASE_URI"] = f'postgresql://lavanya:123@{db_host}:5432/post'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+DB_USER = os.environ.get("DB_USER")
+DB_PASSWORD = os.environ.get("DB_PASSWORD")
+DB_HOST = os.environ.get("DB_HOST", "localhost")  # not secret, safe to default
+DB_PORT = os.environ.get("DB_PORT", "5432")        # not secret, safe to default
+DB_NAME = os.environ.get("DB_NAME")
+ 
+if not all([DB_USER, DB_PASSWORD, DB_NAME]):
+    raise RuntimeError(
+        "DB_USER, DB_PASSWORD and DB_NAME must be set in your .env file"
+    )
+ 
+app.config["SQLALCHEMY_DATABASE_URI"] = (
+    f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+)
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+ 
 db = SQLAlchemy(app)
 # DEFAULT_USER_ID = 1
+
+
+def init_db():
+    """Create the users and posts tables if they don't already exist."""
+    with app.app_context():
+        db.session.execute(text("""
+            CREATE TABLE IF NOT EXISTS users (
+                user_id SERIAL PRIMARY KEY,
+                user_name VARCHAR(20) UNIQUE NOT NULL,
+                password VARCHAR(255) NOT NULL
+            );
+        """))
+        db.session.execute(text("""
+            CREATE TABLE IF NOT EXISTS posts (
+                post_id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES users(user_id),
+                title VARCHAR(255) NOT NULL,
+                body TEXT NOT NULL
+            );
+        """))
+        db.session.commit()
+
 
 @app.route("/")
 def index():
@@ -214,10 +252,14 @@ def get_user_posts(user_id):
     except Exception as e:
         print(e)
         return "Something went wrong", 500
+    
 
 
 if __name__ == "__main__":
+    init_db()
     app.run(host="0.0.0.0", port=5000, debug=True)
+else:
+    init_db()
     
 # create_post:http://127.0.0.1:5000/post
 # fetch user post:http://127.0.0.1:5000/users/1/posts
