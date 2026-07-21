@@ -9,6 +9,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 #plain text → hashed and login time check 
 from functools import wraps
 import os
+from datetime import datetime
 
 app = Flask(__name__)
 load_dotenv()
@@ -57,6 +58,9 @@ def init_db():
         """))
         db.session.commit()
 
+@app.context_processor
+def inject_current_year():
+    return {"current_year": datetime.now().year}
 
 @app.route("/")
 def index():
