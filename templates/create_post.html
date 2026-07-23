@@ -1,17 +1,15 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css"
-      integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
-      crossorigin="anonymous"
-    />
-    <title>Create Post</title>
-  </head>
-  <body
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous" />
+  <title>Create Post</title>
+</head>
+
+<body
     class="d-flex flex-column min-vh-100"
     style="
       background-image: url(&quot;img/pexels-shotbyrain-4705118.jpg&quot;);
@@ -20,42 +18,35 @@
       background-repeat: no-repeat;
     "
   >
-    <!-- Navbar -->
-    {% include 'header.html' %}
+  <!-- Navbar -->
+  {% include 'header.html' %}
+  {% if error %}
+  <div class="alert alert-dark" role="alert">
+    {{error}}
+  </div>
+  {% endif %}
 
-    {% if error %}
-    <div class="alert alert-dark" role="alert">
-      {{error}}
+  <!-- Create Post Form -->
+  <form action="/create-post" method="POST" enctype="multipart/form-data" class="flex-grow-1">
+    <div class="container mt-5">
+      <div class="form-group">
+        <label for="posttitle">Post Title</label>
+        <input type="text" class="form-control" id="posttitle" name="title" placeholder="Enter post title" />
       </div>
-    {% endif %}
-
-    <!-- Create Post Form -->
-    <form action="/create-post" method="POST" class="flex-grow-1">
-      <div class="container mt-5">
-        <div class="form-group">
-          <label for="posttitle">Post Title</label>
-          <input
-            type="text"
-            class="form-control"
-            id="posttitle"
-            name="title"
-            placeholder="Enter post title"
-          />
-        </div>
-        <div class="form-group">
-          <label for="postcontent">Post Content</label>
-          <textarea
-            class="form-control"
-            id="postcontent"
-            name="body"
-            rows="5"
-            placeholder="Enter post content"
-          ></textarea>
-        </div>
-        <button type="submit" class="btn btn-dark">Submit</button>
+      <div class="form-group">
+        <label for="postcontent">Post Content</label>
+        <textarea class="form-control" id="postcontent" name="body" rows="5"
+          placeholder="Enter post content"></textarea>
       </div>
-    </form>
+      <div class="form-group">
+        <label for="postimage">Upload Image</label>
+        <input type="file" class="form-control" id="postimage" name="image" />
+      </div>
+      <button type="submit" class="btn btn-dark">Submit</button>
+    </div>
+  </form>
 
-        {% include 'footer.html' %}
-  </body>
+  {% include 'footer.html' %}
+</body>
+
 </html>

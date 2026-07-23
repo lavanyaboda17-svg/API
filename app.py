@@ -7,9 +7,9 @@ from datetime import timedelta
 #used to represent a duration or the difference between two dates or times
 from werkzeug.security import generate_password_hash, check_password_hash
 #plain text → hashed and login time check 
+from werkzeug.utils import secure_filename
 from functools import wraps
 import os
-from datetime import datetime
 
 app = Flask(__name__)
 load_dotenv()
@@ -37,6 +37,15 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 # DEFAULT_USER_ID = 1
 
+# ---- Image upload config ----
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
+UPLOAD_FOLDER = os.path.join(app.root_path, "static", "uploads")
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+
+def allowed_file(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def init_db():
     """Create the users and posts tables if they don't already exist."""
@@ -53,14 +62,12 @@ def init_db():
                 post_id SERIAL PRIMARY KEY,
                 user_id INTEGER NOT NULL REFERENCES users(user_id),
                 title VARCHAR(255) NOT NULL,
-                body TEXT NOT NULL
+                body TEXT NOT NULL,
+                image_url VARCHAR(255)
             );
         """))
         db.session.commit()
 
-@app.context_processor
-def inject_current_year():
-    return {"current_year": datetime.now().year}
 
 @app.route("/")
 def index():
@@ -217,12 +224,41 @@ def create_post():
     if not title or not body:
         return render_template("create_post.html", error="All fields are required")
 
+    image_filename = None
+    file = request.files.get("image")
+    print("DEBUG: file object received:", file)
+    if file:
+        print("DEBUG: filename received:", repr(file.filename))
+
+    if file and file.filename != "":
+        if not allowed_file(file.filename):
+            print("DEBUG: rejected, extension not allowed:", file.filename)
+            return render_template("create_post.html", error="Invalid image type")
+        image_filename = secure_filename(file.filename)
+        save_path = os.path.join(app.config["UPLOAD_FOLDER"], image_filename)
+        print("DEBUG: attempting to save to:", save_path)
+        try:
+            file.save(save_path)
+            print("DEBUG: save() call completed")
+            print("DEBUG: file exists after save?", os.path.exists(save_path))
+        except Exception as e:
+            print("DEBUG: SAVE FAILED WITH ERROR:", e)
+            return f"Image save failed: {e}", 500
+    else:
+        print("DEBUG: no file was submitted with this form")
+
     try:
         db.session.execute(
             text(
-                "INSERT INTO posts (user_id, title, body) VALUES (:user_id, :title, :body)"
+                "INSERT INTO posts (user_id, title, body, image_url) "
+                "VALUES (:user_id, :title, :body, :image_url)"
             ),
-            {"user_id": session["user_id"], "title": title, "body": body},
+            {
+                "user_id": session["user_id"],
+                "title": title,
+                "body": body,
+                "image_url": image_filename,
+            },
         )
         db.session.commit()
         return redirect(url_for("get_user_posts", user_id=session["user_id"]))
