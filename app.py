@@ -63,7 +63,7 @@ def init_db():
                 user_id INTEGER NOT NULL REFERENCES users(user_id),
                 title VARCHAR(255) NOT NULL,
                 body TEXT NOT NULL,
-                image_url VARCHAR(255)
+                image_url VARCHAR(255) NOT NULL
             );
         """))
         db.session.commit()
@@ -224,28 +224,23 @@ def create_post():
     if not title or not body:
         return render_template("create_post.html", error="All fields are required")
 
-    image_filename = None
     file = request.files.get("image")
-    print("DEBUG: file object received:", file)
-    if file:
-        print("DEBUG: filename received:", repr(file.filename))
 
-    if file and file.filename != "":
-        if not allowed_file(file.filename):
-            print("DEBUG: rejected, extension not allowed:", file.filename)
-            return render_template("create_post.html", error="Invalid image type")
-        image_filename = secure_filename(file.filename)
-        save_path = os.path.join(app.config["UPLOAD_FOLDER"], image_filename)
-        print("DEBUG: attempting to save to:", save_path)
-        try:
-            file.save(save_path)
-            print("DEBUG: save() call completed")
-            print("DEBUG: file exists after save?", os.path.exists(save_path))
-        except Exception as e:
-            print("DEBUG: SAVE FAILED WITH ERROR:", e)
-            return f"Image save failed: {e}", 500
-    else:
-        print("DEBUG: no file was submitted with this form")
+    # Image ab COMPULSORY hai — file missing ya empty filename dono reject honge
+    if not file or file.filename == "":
+        return render_template("create_post.html", error="Image is required")
+
+    if not allowed_file(file.filename):
+        return render_template("create_post.html", error="Invalid image type")
+
+    image_filename = secure_filename(file.filename)
+    save_path = os.path.join(app.config["UPLOAD_FOLDER"], image_filename)
+
+    try:
+        file.save(save_path)
+    except Exception as e:
+        print("DEBUG: SAVE FAILED WITH ERROR:", e)
+        return f"Image save failed: {e}", 500
 
     try:
         db.session.execute(
@@ -266,7 +261,6 @@ def create_post():
         db.session.rollback()
         print(e)
         return "Something went wrong", 500
-
 
 # Fetch posts
 @app.route("/user/<int:user_id>/posts")
