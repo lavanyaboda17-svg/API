@@ -7,9 +7,9 @@ from datetime import timedelta
 #used to represent a duration or the difference between two dates or times
 from werkzeug.security import generate_password_hash, check_password_hash
 #plain text → hashed and login time check 
+from werkzeug.utils import secure_filename
 from functools import wraps
 import os
-from datetime import datetime
 
 app = Flask(__name__)
 load_dotenv()
@@ -37,6 +37,15 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 # DEFAULT_USER_ID = 1
 
+# ---- Image upload config ----
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
+UPLOAD_FOLDER = os.path.join(app.root_path, "static", "uploads")
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+
+def allowed_file(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def init_db():
     """Create the users and posts tables if they don't already exist."""
@@ -53,14 +62,12 @@ def init_db():
                 post_id SERIAL PRIMARY KEY,
                 user_id INTEGER NOT NULL REFERENCES users(user_id),
                 title VARCHAR(255) NOT NULL,
-                body TEXT NOT NULL
+                body TEXT NOT NULL,
+                image_url VARCHAR(255) NOT NULL
             );
         """))
         db.session.commit()
 
-@app.context_processor
-def inject_current_year():
-    return {"current_year": datetime.now().year}
 
 @app.route("/")
 def index():
@@ -217,12 +224,36 @@ def create_post():
     if not title or not body:
         return render_template("create_post.html", error="All fields are required")
 
+    file = request.files.get("image")
+
+    # Image ab COMPULSORY hai — file missing ya empty filename dono reject honge
+    if not file or file.filename == "":
+        return render_template("create_post.html", error="Image is required")
+
+    if not allowed_file(file.filename):
+        return render_template("create_post.html", error="Invalid image type")
+
+    image_filename = secure_filename(file.filename)
+    save_path = os.path.join(app.config["UPLOAD_FOLDER"], image_filename)
+
+    try:
+        file.save(save_path)
+    except Exception as e:
+        print("DEBUG: SAVE FAILED WITH ERROR:", e)
+        return f"Image save failed: {e}", 500
+
     try:
         db.session.execute(
             text(
-                "INSERT INTO posts (user_id, title, body) VALUES (:user_id, :title, :body)"
+                "INSERT INTO posts (user_id, title, body, image_url) "
+                "VALUES (:user_id, :title, :body, :image_url)"
             ),
-            {"user_id": session["user_id"], "title": title, "body": body},
+            {
+                "user_id": session["user_id"],
+                "title": title,
+                "body": body,
+                "image_url": image_filename,
+            },
         )
         db.session.commit()
         return redirect(url_for("get_user_posts", user_id=session["user_id"]))
@@ -230,7 +261,6 @@ def create_post():
         db.session.rollback()
         print(e)
         return "Something went wrong", 500
-
 
 # Fetch posts
 @app.route("/user/<int:user_id>/posts")
@@ -245,7 +275,7 @@ def get_user_posts(user_id):
             return "User not found", 404
 
         result = db.session.execute(
-            text("SELECT * FROM posts WHERE user_id = :user_id"), {"user_id": user_id}
+            text("SELECT * FROM posts WHERE user_id = :user_id ORDER BY post_id ASC"), {"user_id": user_id}
         )
         posts = result.fetchall()
         show_all = request.args.get("show_all", False)
@@ -256,7 +286,93 @@ def get_user_posts(user_id):
     except Exception as e:
         print(e)
         return "Something went wrong", 500
-    
+
+
+# Edit post
+@app.route("/post/<int:post_id>/edit", methods=["GET", "POST"])
+@login_required
+def edit_post(post_id):
+    post = db.session.execute(
+        text("SELECT * FROM posts WHERE post_id = :post_id"),
+        {"post_id": post_id},
+    ).fetchone()
+
+    if not post:
+        return "Post not found", 404
+
+    if post.user_id != session["user_id"]:
+        return "Not authorized", 403
+
+    if request.method == "GET":
+        return render_template("create_post.html", post=post)
+
+    title = request.form.get("title")
+    body = request.form.get("body")
+
+    if not title or not body:
+        return render_template("create_post.html", post=post, error="All fields are required")
+
+    file = request.files.get("image")
+    image_filename = post.image_url
+
+    if file and file.filename != "":
+        if not allowed_file(file.filename):
+            return render_template("create_post.html", post=post, error="Invalid image type")
+        image_filename = secure_filename(file.filename)
+        save_path = os.path.join(app.config["UPLOAD_FOLDER"], image_filename)
+        try:
+            file.save(save_path)
+        except Exception as e:
+            print("DEBUG: SAVE FAILED WITH ERROR:", e)
+            return f"Image save failed: {e}", 500
+
+    try:
+        db.session.execute(
+            text(
+                "UPDATE posts SET title = :title, body = :body, image_url = :image_url "
+                "WHERE post_id = :post_id"
+            ),
+            {
+                "title": title,
+                "body": body,
+                "image_url": image_filename,
+                "post_id": post_id,
+            },
+        )
+        db.session.commit()
+        return redirect(url_for("get_user_posts", user_id=session["user_id"]))
+    except Exception as e:
+        db.session.rollback()
+        print(e)
+        return "Something went wrong", 500
+
+
+# Delete post
+@app.route("/post/<int:post_id>/delete", methods=["POST"])
+@login_required
+def delete_post(post_id):
+    post = db.session.execute(
+        text("SELECT * FROM posts WHERE post_id = :post_id"),
+        {"post_id": post_id},
+    ).fetchone()
+
+    if not post:
+        return "Post not found", 404
+
+    if post.user_id != session["user_id"]:
+        return "Not authorized", 403
+
+    try:
+        db.session.execute(
+            text("DELETE FROM posts WHERE post_id = :post_id"),
+            {"post_id": post_id},
+        )
+        db.session.commit()
+        return redirect(url_for("get_user_posts", user_id=session["user_id"]))
+    except Exception as e:
+        db.session.rollback()
+        print(e)
+        return "Something went wrong", 500
 
 
 if __name__ == "__main__":
