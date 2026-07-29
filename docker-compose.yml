@@ -26,6 +26,7 @@ services:
     environment:
       DB_HOST: db
       DB_PORT: 5432
+      PYTHONUNBUFFERED: 1
     ports:
       - "5000:5000"
     depends_on:

@@ -1,15 +1,15 @@
-from flask import Flask, request, render_template, session , redirect, url_for
+from flask import Flask, request, render_template, session, redirect, url_for
 from flask.cli import load_dotenv
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
 import re
 from datetime import timedelta
-#used to represent a duration or the difference between two dates or times
 from werkzeug.security import generate_password_hash, check_password_hash
-#plain text → hashed and login time check 
 from werkzeug.utils import secure_filename
 from functools import wraps
 import os
+from flask_mail import Mail, Message
+from itsdangerous import URLSafeTimedSerializer
 
 app = Flask(__name__)
 load_dotenv()
@@ -20,22 +20,31 @@ app.permanent_session_lifetime = timedelta(minutes=5)
 
 DB_USER = os.environ.get("DB_USER")
 DB_PASSWORD = os.environ.get("DB_PASSWORD")
-DB_HOST = os.environ.get("DB_HOST", "localhost")  # not secret, safe to default
-DB_PORT = os.environ.get("DB_PORT", "5432")        # not secret, safe to default
+DB_HOST = os.environ.get("DB_HOST", "localhost")
+DB_PORT = os.environ.get("DB_PORT", "5432")
 DB_NAME = os.environ.get("DB_NAME")
- 
+
 if not all([DB_USER, DB_PASSWORD, DB_NAME]):
     raise RuntimeError(
         "DB_USER, DB_PASSWORD and DB_NAME must be set in your .env file"
     )
- 
+
 app.config["SQLALCHEMY_DATABASE_URI"] = (
     f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 )
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
- 
+
 db = SQLAlchemy(app)
-# DEFAULT_USER_ID = 1
+
+# ---- Mail config ----
+app.config["MAIL_SERVER"] = os.getenv("MAIL_SERVER")
+app.config["MAIL_PORT"] = int(os.getenv("MAIL_PORT"))
+app.config["MAIL_USE_TLS"] = os.getenv("MAIL_USE_TLS") == "True"
+app.config["MAIL_USERNAME"] = os.getenv("MAIL_USERNAME")
+app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD")
+
+mail = Mail(app)
+serializer = URLSafeTimedSerializer(app.secret_key)
 
 # ---- Image upload config ----
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
@@ -47,6 +56,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
+
 def init_db():
     """Create the users and posts tables if they don't already exist."""
     with app.app_context():
@@ -54,6 +64,7 @@ def init_db():
             CREATE TABLE IF NOT EXISTS users (
                 user_id SERIAL PRIMARY KEY,
                 user_name VARCHAR(20) UNIQUE NOT NULL,
+                email VARCHAR(255) UNIQUE NOT NULL,
                 password VARCHAR(255) NOT NULL
             );
         """))
@@ -93,12 +104,11 @@ def about():
     return render_template("about.html", username=username)
 
 
-# Login required decorator
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
-            return redirect(url_for('login'))  
+            return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated_function
 
@@ -121,14 +131,17 @@ def register():
 
     username = request.form.get("username")
     password = request.form.get("password")
+    email = request.form.get("email")
 
-    if not username or not password:
+    if not username or not password or not email:
         return render_template("register.html", error="All fields are required")
 
     if not re.match(r'^[a-zA-Z0-9_]{3,20}$', username):
         return render_template("register.html",
                                error="Username must be 3-20 characters, only letters numbers and underscore allowed")
-    
+    if not re.match(r'^[\w\.-]+@[\w\.-]+\.\w+$', email):
+        return render_template("register.html", error="Enter a valid email")
+
     if not re.match(r'^[A-Za-z0-9_@]{8,20}$', password):
         return render_template("register.html",
                            error="Password must be 8-20 characters, only letters, numbers, _ and @ allowed")
@@ -140,15 +153,23 @@ def register():
 
     if existing_user:
         return render_template("register.html", error="Username already exists, please login")
-    
+
+    existing_email = db.session.execute(
+        text("SELECT * FROM users WHERE email = :email"),
+        {"email": email}
+    ).fetchone()
+
+    if existing_email:
+        return render_template("register.html", error="Email already registered, please Login")
+
     hashed_password = generate_password_hash(password)
 
     try:
         db.session.execute(
             text(
-                "INSERT INTO users (user_name, password) VALUES (:username, :password)"
+                "INSERT INTO users (user_name, email, password) VALUES (:username, :email, :password)"
             ),
-            {"username": username, "password": hashed_password},
+            {"username": username, "password": hashed_password, "email": email},
         )
         db.session.commit()
 
@@ -214,6 +235,73 @@ def login():
         return "Something went wrong", 500
 
 
+# Forgot Password - Step 1: send reset link
+@app.route("/forgot-password", methods=["GET", "POST"])
+def forgot_password():
+    if request.method == "GET":
+        return render_template("forgot_password.html")
+
+    email = request.form.get("email")
+
+    if not email:
+        return render_template("forgot_password.html", error="Email is required")
+
+    user = db.session.execute(
+        text("SELECT * FROM users WHERE email = :email"),
+        {"email": email}
+    ).fetchone()
+
+    if not user:
+        return render_template("forgot_password.html", error="Email not found")
+
+    token = serializer.dumps(email, salt="password-reset")
+    reset_link = url_for("reset_password", token=token, _external=True)
+
+    msg = Message("Password Reset Request",
+                  sender=app.config["MAIL_USERNAME"],
+                  recipients=[email])
+    msg.body = f"Click the link to reset your password: {reset_link}\nThis link expires in 30 minutes."
+
+    try:
+        mail.send(msg)
+        return render_template("forgot_password.html", message="Password reset link sent to your email!")
+    except Exception as e:
+        print(e)
+        return render_template("forgot_password.html", error="Failed to send email")
+
+
+# Forgot Password - Step 2: set new password via token
+@app.route("/reset-password/<token>", methods=["GET", "POST"])
+def reset_password(token):
+    try:
+        email = serializer.loads(token, salt="password-reset", max_age=1800)
+    except Exception:
+        return "This reset link is invalid or has expired.", 400
+
+    if request.method == "GET":
+        return render_template("reset_password.html", token=token)
+
+    new_password = request.form.get("new_password")
+
+    if not new_password or not re.match(r'^[A-Za-z0-9_@]{8,20}$', new_password):
+        return render_template("reset_password.html", token=token,
+                               error="Password must be 8-20 characters, only letters, numbers, _ and @ allowed")
+
+    hashed_password = generate_password_hash(new_password)
+
+    try:
+        db.session.execute(
+            text("UPDATE users SET password = :password WHERE email = :email"),
+            {"password": hashed_password, "email": email},
+        )
+        db.session.commit()
+        return redirect(url_for("login"))
+    except Exception as e:
+        db.session.rollback()
+        print(e)
+        return "Something went wrong", 500
+
+
 # Create post
 @app.route("/create-post", methods=["POST"])
 @login_required
@@ -226,7 +314,6 @@ def create_post():
 
     file = request.files.get("image")
 
-    # Image ab COMPULSORY hai — file missing ya empty filename dono reject honge
     if not file or file.filename == "":
         return render_template("create_post.html", error="Image is required")
 
@@ -261,6 +348,7 @@ def create_post():
         db.session.rollback()
         print(e)
         return "Something went wrong", 500
+
 
 # Fetch posts
 @app.route("/user/<int:user_id>/posts")
@@ -380,7 +468,7 @@ if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
 else:
     init_db()
-    
+
 # create_post:http://127.0.0.1:5000/post
 # fetch user post:http://127.0.0.1:5000/users/1/posts
 # git rebase develop
