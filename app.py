@@ -226,7 +226,6 @@ def create_post():
 
     file = request.files.get("image")
 
-    # Image ab COMPULSORY hai — file missing ya empty filename dono reject honge
     if not file or file.filename == "":
         return render_template("create_post.html", error="Image is required")
 
