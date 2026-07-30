@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-    {% include 'head.html' %}
+  {% include 'head.html' %}
   <title>User Posts - BlogApp</title>
 </head>
 <body class="d-flex flex-column min-vh-100">
@@ -15,7 +15,8 @@
 
     {% if posts %}
     <div class="row">
-      {% for post in posts %} {% if loop.index <= 2 or show_all %} <div class="col-md-4 col-lg-3 mb-4">
+      {% for post in posts %} {% if loop.index <= 2 or show_all %}
+      <div class="col-md-4 col-lg-3 mb-4">
         <div class="card shadow-sm h-100">
           {% if post.image_url %}
           <a href="{{ url_for('static', filename='uploads/' + post.image_url) }}" target="_blank">
@@ -37,6 +38,8 @@
             </div>
           </div>
         </div>
+      </div>
+      {% endif %} {% endfor %}
     </div>
     {% endif %} {% endfor %}
   </div>
@@ -50,6 +53,21 @@
     No posts yet. <a href="/post">Create your first post!</a>
   </p>
   {% endif %}
+  </div>
+
+  <!-- Footer -->
+  {% include 'footer.html' %}
+</body>
+
+    {% if not show_all %}
+    <a href="/user/{{ posts[0].user_id }}/posts?show_all=true" class="btn btn-outline-dark">Show All Posts</a>
+    {% endif %}
+
+    {% else %}
+    <p class="text-muted">
+      No posts yet. <a href="/post">Create your first post!</a>
+    </p>
+    {% endif %}
   </div>
 
   <!-- Footer -->
