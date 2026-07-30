@@ -41,6 +41,23 @@
       </div>
       {% endif %} {% endfor %}
     </div>
+    {% endif %} {% endfor %}
+  </div>
+
+  {% if not show_all %}
+  <a href="/user/{{ posts[0].user_id }}/posts?show_all=true" class="btn btn-outline-dark">Show All Posts</a>
+  {% endif %}
+
+  {% else %}
+  <p class="text-muted">
+    No posts yet. <a href="/post">Create your first post!</a>
+  </p>
+  {% endif %}
+  </div>
+
+  <!-- Footer -->
+  {% include 'footer.html' %}
+</body>
 
     {% if not show_all %}
     <a href="/user/{{ posts[0].user_id }}/posts?show_all=true" class="btn btn-outline-dark">Show All Posts</a>

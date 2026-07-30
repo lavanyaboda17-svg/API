@@ -56,6 +56,15 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
+# ---- Image upload config ----
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
+UPLOAD_FOLDER = os.path.join(app.root_path, "static", "uploads")
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+
+def allowed_file(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def init_db():
     """Create the users and posts tables if they don't already exist."""
@@ -349,7 +358,6 @@ def create_post():
         print(e)
         return "Something went wrong", 500
 
-
 # Fetch posts
 @app.route("/user/<int:user_id>/posts")
 @login_required
@@ -462,6 +470,17 @@ def delete_post(post_id):
         print(e)
         return "Something went wrong", 500
 
+    try:
+        db.session.execute(
+            text("DELETE FROM posts WHERE post_id = :post_id"),
+            {"post_id": post_id},
+        )
+        db.session.commit()
+        return redirect(url_for("get_user_posts", user_id=session["user_id"]))
+    except Exception as e:
+        db.session.rollback()
+        print(e)
+        return "Something went wrong", 500
 
 if __name__ == "__main__":
     init_db()
