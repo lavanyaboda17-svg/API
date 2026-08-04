@@ -12,6 +12,9 @@ A simple Flask-based blogging application with user registration, login, and pos
 - Logout functionality
 - PostgreSQL Database
 - Docker & Docker Compose Support
+- Forgot password / reset password via email
+- Edit and delete posts
+- Cloudinary-based image hosting
 
 ## Tech Stack
 
@@ -20,6 +23,7 @@ A simple Flask-based blogging application with user registration, login, and pos
 - **ORM:** Flask-SQLAlchemy
 - **Templating:** Jinja2
 - **Frontend:** HTML, Bootstrap 4
+- **Image Hosting:** Cloudinary
 - **Containerization:** Docker, Docker Compose
 
 ## Prerequisites
@@ -50,11 +54,16 @@ BlogApp/
     ├── about.html
     ├── login.html
     ├── register.html
+    ├── forgot_password.html
+    ├── reset_password.html
     ├── create_post.html
     ├── view_post.html
     ├── profile.html
-    ├── post_success.html
-    └── single_post.html
+    ├── post_found.html
+    ├── post_not_found.html
+    ├── head.html
+    ├── header.html
+    └── footer.html
 ```
 
 ## Setup Instructions
@@ -84,6 +93,16 @@ DB_PORT=5432
 DB_NAME=your_db_name
 
 SECRET_KEY=your_secret_key
+
+MAIL_SERVER=your_mail_server
+MAIL_PORT=your_mail_port
+MAIL_USE_TLS=True
+MAIL_USERNAME=your_email
+MAIL_PASSWORD=your_email_app_password
+
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
 ```
 
 ### 3. Install dependencies
@@ -165,3 +184,7 @@ The PostgreSQL database is exposed on the host at `localhost:5433` (mapped from 
 | `/create-post` | POST | Submit a new post (login required) |
 | `/user/<user_id>/posts` | GET | View a user's posts (login required) |
 | `/user/profile/<user_id>` | GET | View user profile (login required) |
+| `/forgot-password` | GET, POST | Request password reset link via email |
+| `/reset-password/<token>` | GET, POST | Reset password using emailed token |
+| `/post/<post_id>/edit` | GET, POST | Edit an existing post (login required) |
+| `/post/<post_id>/delete` | POST | Delete a post (login required) |
