@@ -21,7 +21,7 @@
   {% endif %}
 
   <!-- Create Post Form -->
-  <form action="{% if post %}{{ url_for('edit_post', post_id=post.post_id) }}{% else %}/create-post{% endif %}"
+<form action="{% if post %}{{ url_for('posts.edit_post', post_id=post.post_id) }}{% else %}{{ url_for('posts.create_post') }}{% endif %}"
     method="POST" enctype="multipart/form-data" class="flex-grow-1">
     <div class="container mt-5">
       <div class="form-group">
