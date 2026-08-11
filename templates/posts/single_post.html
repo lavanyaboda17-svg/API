@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    {% include 'head.html' %}
+    <title>{{ post.title }} - BlogApp</title>
+</head>
+
+<body class="d-flex flex-column min-vh-100">
+
+    {% include 'header.html' %}
+
+    <div class="container mt-5 mb-5 flex-grow-1">
+
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+
+                <div class="card shadow">
+
+                    {% if post.image_url %}
+                    <a href="{{ post.image_url }}" target="_blank">
+                        <img src="{{ post.image_url }}"
+                             class="card-img-top"
+                             style="width:100%; height:280px; object-fit:contain; background-color:#f8f9fa;"
+                             alt="{{ post.title }}">
+                    </a>
+                    {% endif %}
+
+                    <div class="card-body">
+
+                        <h2 class="card-title font-weight-bold">
+                            {{ post.title }}
+                        </h2>
+
+                        <hr>
+
+                        <p class="card-text">
+                            {% if post.body|length > 200 %}
+                                <span class="short-text">{{ post.body[:200] }}...</span>
+                                <span class="full-text d-none">{{ post.body }}</span>
+                                <a href="javascript:void(0);" class="read-toggle text-primary d-block mt-1" onclick="toggleRead(this)">Read More</a>
+                            {% else %}
+                                {{ post.body }}
+                            {% endif %}
+                        </p>
+
+                        <div class="mt-4">
+
+                            <a href="{{ url_for('posts.get_user_posts', user_id=post.user_id) }}"
+                               class="btn btn-secondary">
+                                Back
+                            </a>
+
+                            {% if session['user_id'] == post.user_id %}
+                            <a href="{{ url_for('posts.edit_post', post_id=post.post_id) }}"
+                               class="btn btn-primary">
+                                Edit
+                            </a>
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    {% include 'footer.html' %}
+
+    <script>
+        function toggleRead(el) {
+            const parent = el.parentElement;
+            const shortText = parent.querySelector('.short-text');
+            const fullText = parent.querySelector('.full-text');
+
+            if (fullText.classList.contains('d-none')) {
+                fullText.classList.remove('d-none');
+                shortText.classList.add('d-none');
+                el.textContent = 'Read Less';
+            } else {
+                fullText.classList.add('d-none');
+                shortText.classList.remove('d-none');
+                el.textContent = 'Read More';
+            }
+        }
+    </script>
+
+</body>
+</html>
