@@ -22,7 +22,7 @@
           {% if post.image_url %}
           <a href="{{ url_for('posts.single_post', post_id=post.post_id) }}">
             <img src="{{ post.image_url }}" class="card-img-top" style="height: 250px; object-fit: cover;"
-              alt="Post Image">
+              alt="Post Image" loading="lazy">
           </a>
           {% endif %}
           <div class="card-body">
