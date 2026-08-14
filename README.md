@@ -1,6 +1,6 @@
 # BlogApp
 
-A simple Flask-based blogging application with user registration, login, and post creation features. Built with Flask, Flask-SQLAlchemy, and PostgreSQL.
+A simple Flask-based blogging application with user registration, login, and post creation features. Built with Flask, Flask-SQLAlchemy, and PostgreSQL. Organized using Flask Blueprints for modular structure.
 
 ## Features
 
@@ -15,10 +15,13 @@ A simple Flask-based blogging application with user registration, login, and pos
 - Forgot password / reset password via email
 - Edit and delete posts
 - Cloudinary-based image hosting
+- Paginated post listing (numbered pagination)
+- Lazy-loaded images with fade-in effect
 
 ## Tech Stack
 
-- **Backend:** Python, Flask
+- **Backend:** Python, Flask, Flask-Blueprints
+- **Architecture:** Modular Blueprint-based structure (`main`, `auth`, `posts`, `profile`)
 - **Database:** PostgreSQL
 - **ORM:** Flask-SQLAlchemy
 - **Templating:** Jinja2
@@ -39,32 +42,52 @@ A simple Flask-based blogging application with user registration, login, and pos
 BlogApp/
 │
 ├── app.py
+├── extensions.py
+├── utils.py
 ├── Dockerfile
 ├── docker-compose.yml
 ├── requirements.txt
 ├── README.md
-├── .env                     # Real credentials (not committed)
-├── .env.example             # Template for .env
+├── .env # Real credentials (not committed)
+├── .env.example # Template for .env
 ├── .dockerignore
 ├── .gitignore
+│
+├── main/
+│ ├── init.py
+│ └── routes.py
+│
+├── auth/
+│ ├── init.py
+│ └── routes.py
+│├── posts/
+│ ├── init.py
+│ └── routes.py
+│
+├── profile/
+│ ├── init.py
+│ └── routes.py
+│
 ├── static/
-│   └── abc.mp4              # Background video for homepage
-└── templates/
-    ├── index.html
-    ├── about.html
-    ├── login.html
-    ├── register.html
-    ├── forgot_password.html
-    ├── reset_password.html
-    ├── create_post.html
-    ├── view_post.html
-    ├── profile.html
-    ├── post_found.html
-    ├── post_not_found.html
-    ├── head.html
-    ├── header.html
-    └── footer.html
-```
+│ └── abc.mp4 # Background video for homepage
+│└── templates/
+├── head.html
+├── header.html
+├── footer.html
+├── main/
+│ ├── index.html
+│ └── about.html
+├── auth/
+│ ├── login.html
+│ ├── register.html
+│ ├── forgot_password.html
+│ └── reset_password.html
+├── posts/
+│ ├── create_post.html
+│ ├── view_post.html
+│ └── single_post.html
+└── profile/
+└── profile.html
 
 ## Setup Instructions
 
@@ -173,18 +196,19 @@ The PostgreSQL database is exposed on the host at `localhost:5433` (mapped from 
 
 ## Routes
 
-| Route | Method | Description |
-| ------ | ------ | ----------- |
-| `/` | GET | Homepage |
-| `/about` | GET | About page |
-| `/register` | GET, POST | User registration |
-| `/login` | GET, POST | User login |
-| `/logout` | GET | Logout, clears session |
-| `/post` | GET | Create post form (login required) |
-| `/create-post` | POST | Submit a new post (login required) |
-| `/user/<user_id>/posts` | GET | View a user's posts (login required) |
-| `/user/profile/<user_id>` | GET | View user profile (login required) |
-| `/forgot-password` | GET, POST | Request password reset link via email |
-| `/reset-password/<token>` | GET, POST | Reset password using emailed token |
-| `/post/<post_id>/edit` | GET, POST | Edit an existing post (login required) |
-| `/post/<post_id>/delete` | POST | Delete a post (login required) |
+| Route | Method | Blueprint | Description |
+| ------ | ------ | ------ | ----------- |
+| `/` | GET | main | Homepage |
+| `/about` | GET | main | About page |
+| `/register` | GET, POST | auth | User registration |
+| `/login` | GET, POST | auth | User login |
+| `/logout` | GET | auth | Logout, clears session |
+| `/forgot-password` | GET, POST | auth | Request password reset link via email |
+| `/reset-password/<token>` | GET, POST | auth | Reset password using emailed token |
+| `/post` | GET | posts | Create post form (login required) |
+| `/create-post` | POST | posts | Submit a new post (login required) |
+| `/user/<user_id>/posts` | GET | posts | View a user's posts, paginated (login required) |
+| `/post/<post_id>` | GET | posts | View a single post (login required) |
+| `/post/<post_id>/edit` | GET, POST | posts | Edit an existing post (login required) |
+| `/post/<post_id>/delete` | POST | posts | Delete a post (login required) |
+| `/user/profile/<user_id>` | GET | profile | View user profile (login required) |
