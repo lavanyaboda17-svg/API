@@ -38,7 +38,7 @@
           <div class="card-body">
             <h5 class="card-title font-weight-bold">
               <a href="{{ url_for('posts.single_post', post_id=post.post_id) }}" class="text-dark text-decoration-none">
-                {{ loop.index }}. {{ post.title }}
+                {{(page - 1) * per_page + loop.index }}. {{ post.title }}
               </a>
             </h5>
 
