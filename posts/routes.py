@@ -69,6 +69,9 @@ def create_post():
 @posts_bp.route("/user/<int:user_id>/posts")
 @login_required
 def get_user_posts(user_id):
+    page = request.args.get("page", 1, type=int)
+    per_page = 4
+    offset = (page - 1) * per_page
     try:
         user = db.session.execute(
             text("SELECT * FROM users WHERE user_id = :user_id"), {"user_id": user_id}
@@ -78,13 +81,25 @@ def get_user_posts(user_id):
             return "User not found", 404
 
         result = db.session.execute(
-            text("SELECT * FROM posts WHERE user_id = :user_id ORDER BY post_id ASC"),
-            {"user_id": user_id},
+            text("SELECT * FROM posts WHERE user_id = :user_id ORDER BY post_id ASC LIMIT :limit OFFSET :offset"),
+            {"user_id": user_id, "limit": per_page, "offset": offset},
         )
         posts = result.fetchall()
-        show_all = request.args.get("show_all", False)
+
+        total_posts = db.session.execute(
+            text("SELECT COUNT(*) FROM posts WHERE user_id = :user_id"),
+            {"user_id": user_id},
+        ).scalar()
+        total_pages = (total_posts + per_page - 1) // per_page
+
         return render_template(
-            "posts/view_post.html", posts=posts, show_all=show_all, username=user.user_name
+            "posts/view_post.html", 
+            posts=posts,
+            username=user.user_name, 
+            page=page,
+            per_page=per_page,
+            user_id=user_id,
+            total_pages=total_pages
         )
 
     except Exception as e:
