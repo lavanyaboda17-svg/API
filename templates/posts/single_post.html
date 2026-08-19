@@ -71,23 +71,7 @@
 
     {% include 'footer.html' %}
 
-    <script>
-        function toggleRead(el) {
-            const parent = el.parentElement;
-            const shortText = parent.querySelector('.short-text');
-            const fullText = parent.querySelector('.full-text');
-
-            if (fullText.classList.contains('d-none')) {
-                fullText.classList.remove('d-none');
-                shortText.classList.add('d-none');
-                el.textContent = 'Read Less';
-            } else {
-                fullText.classList.add('d-none');
-                shortText.classList.remove('d-none');
-                el.textContent = 'Read More';
-            }
-        }
-    </script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 
 </body>
 </html>
